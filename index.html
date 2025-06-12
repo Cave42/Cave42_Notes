@@ -1,0 +1,29 @@
+---
+layout: none
+title: “All pages”
+---
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>{{ page.title }}</title>
+</head>
+
+<body>
+    <h1>{{ page.title }}</h1>
+    <ul>
+        {% for p in site.pages %}
+        {% assign ext = p.url | split:'.' | last %}
+        {% if ext == 'html' and p.url != '/index.html' %}
+        <li>
+            <a href="{{ p.url | relative_url }}">
+                {{ p.url | remove:'.html' | remove:'/' | capitalize }}
+            </a>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+</body>
+
+</html>
