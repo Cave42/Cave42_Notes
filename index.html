@@ -1,7 +1,8 @@
 ---
 layout: none
-title: "All Pages"
+title: All Pages
 ---
+
 <!DOCTYPE html>
 <html>
 
@@ -15,7 +16,7 @@ title: "All Pages"
     <ul>
         {% for p in site.pages %}
         {% if p.url != '/index.html' and p.extname == '.html' %}
-        <li><a href="{{ p.url | relative_url }}">{{ p.url }}</a></li>
+        <li><a href="{{ p.url | relative_url }}">{{ p.title | default: p.url }}</a></li>
         {% endif %}
         {% endfor %}
     </ul>
