@@ -1,0 +1,50 @@
+# Jekyll Configuration for Cave42 Notes
+title: "Cave42 Notes"
+description: "Research notes and documentation"
+baseurl: ""
+url: "https://cavendan.github.io"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Collections
+collections:
+  notes:
+    output: true
+    permalink: /:collection/:name/
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Include/Exclude files
+include:
+  - _pages
+  - Notes
+
+exclude:
+  - .DS_Store
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+
+# Default layouts
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "Notes"
+    values:
+      layout: "note"
+
+# Site settings
+timezone: America/New_York
+future: false
+show_drafts: false
