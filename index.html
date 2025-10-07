@@ -220,6 +220,12 @@
                     "type": "marimo"
           },
           {
+                    "title": "ESM2 and the Golem of Prague",
+                    "path": "Notes/ESM_Lab_Meeting_9_3_25/index.html",
+                    "folder": "Notes/ESM_Lab_Meeting_9_3_25",
+                    "type": "presentation"
+          },
+          {
                     "title": "LOESS ESM",
                     "path": "Notes/LOESS_ESM.html",
                     "folder": "Notes",
@@ -277,9 +283,9 @@
             const groupedNotes = groupNotesByFolder(knownNotes);
             let html = '';
             
-            Object.keys(groupedNotes).forEach(folder => {
+            Object.keys(groupedNotes).sort().forEach(folder => {
                 const folderDisplayName = folder === 'Root' ? 'Root Directory' : 
-                                        folder.replace(/\//g, ' / ');
+                                        folder.replace(/\//g, ' / ').replace('Notes /', 'Notes/');
                 
                 html += `
                     <div class="folder-section" data-folder="${folder}">
