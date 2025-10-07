@@ -89,6 +89,27 @@
             font-size: 1.2rem;
         }
         
+        .subfolder-section {
+            margin-left: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .subfolder-title {
+            font-size: 1.1rem;
+            color: #8b5cf6;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .subfolder-icon {
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+        
         .notes-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -279,11 +300,12 @@
             notes.forEach(note => {
                 let groupKey = note.folder || 'Root';
                 
-                // Special handling for Presentations and Project Notes - group subfolders together
+                // Special handling for Presentations - group subfolders together
                 if (groupKey.startsWith('Notes/Presentations/')) {
                     groupKey = 'Notes/Presentations';
                 } else if (groupKey.startsWith('Notes/Project Notes/')) {
-                    groupKey = 'Notes/Project Notes';
+                    // Keep Project Notes subfolders separate for hierarchical display
+                    groupKey = groupKey; // Keep the full path for Project Notes
                 }
                 
                 if (!grouped[groupKey]) {
@@ -303,13 +325,26 @@
             const groupedNotes = groupNotesByFolder(knownNotes);
             let html = '';
             
-            Object.keys(groupedNotes).sort().forEach(folder => {
+            // Separate Project Notes folders for hierarchical display
+            const projectNotesFolders = {};
+            const otherFolders = {};
+            
+            Object.keys(groupedNotes).forEach(folder => {
+                if (folder.startsWith('Notes/Project Notes/')) {
+                    const subFolder = folder.replace('Notes/Project Notes/', '');
+                    projectNotesFolders[subFolder] = groupedNotes[folder];
+                } else {
+                    otherFolders[folder] = groupedNotes[folder];
+                }
+            });
+            
+            // Render non-Project Notes folders first
+            Object.keys(otherFolders).sort().forEach(folder => {
                 let folderDisplayName;
                 
                 if (folder === 'Root') {
                     folderDisplayName = 'Root Directory';
                 } else if (folder.startsWith('Notes/')) {
-                    // Remove "Notes/" prefix and clean up the display name
                     folderDisplayName = folder.replace('Notes/', '');
                 } else {
                     folderDisplayName = folder;
@@ -322,11 +357,38 @@
                             ${folderDisplayName}
                         </h2>
                         <div class="notes-grid">
-                            ${groupedNotes[folder].map(createNoteCard).join('')}
+                            ${otherFolders[folder].map(createNoteCard).join('')}
                         </div>
                     </div>
                 `;
             });
+            
+            // Render Project Notes with hierarchical structure
+            if (Object.keys(projectNotesFolders).length > 0) {
+                html += `
+                    <div class="folder-section" data-folder="Notes/Project Notes">
+                        <h2 class="folder-title">
+                            <span class="folder-icon">📁</span>
+                            Project Notes
+                        </h2>
+                `;
+                
+                Object.keys(projectNotesFolders).sort().forEach(subFolder => {
+                    html += `
+                        <div class="subfolder-section">
+                            <h3 class="subfolder-title">
+                                <span class="subfolder-icon">📂</span>
+                                ${subFolder}
+                            </h3>
+                            <div class="notes-grid">
+                                ${projectNotesFolders[subFolder].map(createNoteCard).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
             
             notesContainer.innerHTML = html;
             totalNotesCount.textContent = knownNotes.length;
@@ -349,8 +411,10 @@
                 
                 folderSections.forEach(function(section) {
                     const noteCards = section.querySelectorAll('.note-card');
+                    const subfolderSections = section.querySelectorAll('.subfolder-section');
                     let hasVisibleCards = false;
                     
+                    // Handle regular note cards
                     noteCards.forEach(function(card) {
                         const title = card.getAttribute('data-title') || '';
                         const path = card.getAttribute('data-path') || '';
@@ -362,6 +426,28 @@
                         } else {
                             card.style.display = 'none';
                         }
+                    });
+                    
+                    // Handle subfolder sections (for Project Notes)
+                    subfolderSections.forEach(function(subfolder) {
+                        const subNoteCards = subfolder.querySelectorAll('.note-card');
+                        let hasVisibleSubCards = false;
+                        
+                        subNoteCards.forEach(function(card) {
+                            const title = card.getAttribute('data-title') || '';
+                            const path = card.getAttribute('data-path') || '';
+                            
+                            if (title.includes(searchTerm) || path.includes(searchTerm)) {
+                                card.style.display = 'block';
+                                hasVisibleSubCards = true;
+                                hasVisibleResults = true;
+                                hasVisibleCards = true;
+                            } else {
+                                card.style.display = 'none';
+                            }
+                        });
+                        
+                        subfolder.style.display = hasVisibleSubCards ? 'block' : 'none';
                     });
                     
                     section.style.display = hasVisibleCards ? 'block' : 'none';
