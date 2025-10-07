@@ -277,11 +277,19 @@
         function groupNotesByFolder(notes) {
             const grouped = {};
             notes.forEach(note => {
-                const folder = note.folder || 'Root';
-                if (!grouped[folder]) {
-                    grouped[folder] = [];
+                let groupKey = note.folder || 'Root';
+                
+                // Special handling for Presentations and Project Notes - group subfolders together
+                if (groupKey.startsWith('Notes/Presentations/')) {
+                    groupKey = 'Notes/Presentations';
+                } else if (groupKey.startsWith('Notes/Project Notes/')) {
+                    groupKey = 'Notes/Project Notes';
                 }
-                grouped[folder].push(note);
+                
+                if (!grouped[groupKey]) {
+                    grouped[groupKey] = [];
+                }
+                grouped[groupKey].push(note);
             });
             return grouped;
         }
@@ -296,8 +304,16 @@
             let html = '';
             
             Object.keys(groupedNotes).sort().forEach(folder => {
-                const folderDisplayName = folder === 'Root' ? 'Root Directory' : 
-                                        folder.replace(/\//g, ' / ').replace('Notes /', 'Notes/');
+                let folderDisplayName;
+                
+                if (folder === 'Root') {
+                    folderDisplayName = 'Root Directory';
+                } else if (folder.startsWith('Notes/')) {
+                    // Remove "Notes/" prefix and clean up the display name
+                    folderDisplayName = folder.replace('Notes/', '');
+                } else {
+                    folderDisplayName = folder;
+                }
                 
                 html += `
                     <div class="folder-section" data-folder="${folder}">
