@@ -363,11 +363,18 @@
                 
                 // Render subfolders
                 Object.keys(section.subfolders).sort().forEach(subfolderName => {
+                    let displayName = subfolderName;
+                    
+                    // For presentations, show only the immediate folder name, not the full path
+                    if (sectionName === 'Presentations') {
+                        displayName = subfolderName.split('/').pop(); // Get just the last part
+                    }
+                    
                     html += `
                         <div class="subfolder-section">
                             <h3 class="subfolder-title">
                                 <span class="subfolder-icon">📂</span>
-                                ${subfolderName}
+                                ${displayName}
                             </h3>
                             <div class="notes-grid">
                                 ${section.subfolders[subfolderName].map(createNoteCard).join('')}
