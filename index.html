@@ -294,13 +294,8 @@
             notes.forEach(note => {
                 let groupKey = note.folder || 'Root';
                 
-                // Special handling for Presentations - group subfolders together
-                if (groupKey.startsWith('Notes/Presentations/')) {
-                    groupKey = 'Notes/Presentations';
-                } else if (groupKey.startsWith('Notes/Project Notes/')) {
-                    // Keep Project Notes subfolders separate for hierarchical display
-                    groupKey = groupKey; // Keep the full path for Project Notes
-                }
+                // Keep all subfolders separate for hierarchical display
+                // No special handling needed - use the full path as-is
                 
                 if (!grouped[groupKey]) {
                     grouped[groupKey] = [];
@@ -319,70 +314,70 @@
             const groupedNotes = groupNotesByFolder(knownNotes);
             let html = '';
             
-            // Separate Project Notes folders for hierarchical display
-            const projectNotesFolders = {};
-            const otherFolders = {};
+            // Group all folders hierarchically
+            const hierarchicalStructure = {};
             
             Object.keys(groupedNotes).forEach(folder => {
-                if (folder.startsWith('Notes/Project Notes/')) {
-                    const subFolder = folder.replace('Notes/Project Notes/', '');
-                    projectNotesFolders[subFolder] = groupedNotes[folder];
-                } else {
-                    otherFolders[folder] = groupedNotes[folder];
-                }
-            });
-            
-            // Render non-Project Notes folders first
-            Object.keys(otherFolders).sort().forEach(folder => {
-                let folderDisplayName;
-                
                 if (folder === 'Root') {
-                    folderDisplayName = 'Root Directory';
+                    hierarchicalStructure['Root'] = { files: groupedNotes[folder], subfolders: {} };
                 } else if (folder.startsWith('Notes/')) {
-                    folderDisplayName = folder.replace('Notes/', '');
-                } else {
-                    folderDisplayName = folder;
+                    const pathParts = folder.split('/');
+                    const mainSection = pathParts[1]; // e.g., "Background Notes", "Marimo", etc.
+                    
+                    if (!hierarchicalStructure[mainSection]) {
+                        hierarchicalStructure[mainSection] = { files: [], subfolders: {} };
+                    }
+                    
+                    if (pathParts.length === 2) {
+                        // Direct files in main section (e.g., Notes/Marimo)
+                        hierarchicalStructure[mainSection].files = groupedNotes[folder];
+                    } else {
+                        // Files in subfolder (e.g., Notes/Project Notes/ESM)
+                        const subfolderPath = pathParts.slice(2).join('/');
+                        hierarchicalStructure[mainSection].subfolders[subfolderPath] = groupedNotes[folder];
+                    }
                 }
-                
-                html += `
-                    <div class="folder-section" data-folder="${folder}">
-                        <h2 class="folder-title">
-                            <span class="folder-icon">📁</span>
-                            ${folderDisplayName}
-                        </h2>
-                        <div class="notes-grid">
-                            ${otherFolders[folder].map(createNoteCard).join('')}
-                        </div>
-                    </div>
-                `;
             });
             
-            // Render Project Notes with hierarchical structure
-            if (Object.keys(projectNotesFolders).length > 0) {
+            // Render all sections with hierarchical structure
+            Object.keys(hierarchicalStructure).sort().forEach(sectionName => {
+                const section = hierarchicalStructure[sectionName];
+                const sectionDisplayName = sectionName === 'Root' ? 'Root Directory' : sectionName;
+                
                 html += `
-                    <div class="folder-section" data-folder="Notes/Project Notes">
+                    <div class="folder-section" data-folder="Notes/${sectionName}">
                         <h2 class="folder-title">
                             <span class="folder-icon">📁</span>
-                            Project Notes
+                            ${sectionDisplayName}
                         </h2>
                 `;
                 
-                Object.keys(projectNotesFolders).sort().forEach(subFolder => {
+                // Render direct files in the main section
+                if (section.files && section.files.length > 0) {
+                    html += `
+                        <div class="notes-grid">
+                            ${section.files.map(createNoteCard).join('')}
+                        </div>
+                    `;
+                }
+                
+                // Render subfolders
+                Object.keys(section.subfolders).sort().forEach(subfolderName => {
                     html += `
                         <div class="subfolder-section">
                             <h3 class="subfolder-title">
                                 <span class="subfolder-icon">📂</span>
-                                ${subFolder}
+                                ${subfolderName}
                             </h3>
                             <div class="notes-grid">
-                                ${projectNotesFolders[subFolder].map(createNoteCard).join('')}
+                                ${section.subfolders[subfolderName].map(createNoteCard).join('')}
                             </div>
                         </div>
                     `;
                 });
                 
                 html += `</div>`;
-            }
+            });
             
             notesContainer.innerHTML = html;
             totalNotesCount.textContent = knownNotes.length;
