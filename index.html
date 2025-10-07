@@ -1,15 +1,9 @@
----
-layout: default
-title: Cave42 Notes
-description: Research notes and documentation hub
----
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ page.title }}</title>
+    <title>Cave42 Notes</title>
     <style>
         * {
             margin: 0;
@@ -189,8 +183,8 @@ description: Research notes and documentation hub
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{ page.title }}</h1>
-            <p>{{ page.description }}</p>
+            <h1>Cave42 Notes</h1>
+            <p>Research notes and documentation hub</p>
         </div>
         
         <div class="search-box">
@@ -198,68 +192,118 @@ description: Research notes and documentation hub
         </div>
         
         <div class="content">
-            {% assign html_pages = site.pages | where_exp: "page", "page.path contains '.html'" | where_exp: "page", "page.path != 'index.html'" %}
-            {% assign grouped_pages = html_pages | group_by_exp: "page", "page.path | split: '/' | slice: 0, -1 | join: '/'" %}
+            <div id="loadingMessage" style="text-align: center; padding: 40px; color: #666;">
+                Loading notes...
+            </div>
             
-            <div id="notesContainer">
-                {% for group in grouped_pages %}
-                    {% assign folder_name = group.name | default: "Root" %}
-                    {% if folder_name != "" %}
-                        <div class="folder-section" data-folder="{{ folder_name }}">
-                            <h2 class="folder-title">
-                                <span class="folder-icon">📁</span>
-                                {% if folder_name == "Root" %}
-                                    Root Directory
-                                {% else %}
-                                    {{ folder_name | replace: "/", " / " | replace: "Notes", "Notes" }}
-                                {% endif %}
-                            </h2>
-                            
-                            <div class="notes-grid">
-                                {% for page in group.items %}
-                                    {% unless page.path contains "plugin" or page.path contains "speaker-view" %}
-                                        <div class="note-card" data-title="{{ page.title | default: page.name | downcase }}" data-path="{{ page.path | downcase }}">
-                                            <a href="{{ page.url | relative_url }}" class="note-title">
-                                                {% assign page_title = page.title %}
-                                                {% if page_title == nil or page_title == "" %}
-                                                    {% assign page_title = page.path | split: "/" | last | split: "." | first | replace: "_", " " | replace: "-", " " %}
-                                                {% endif %}
-                                                {{ page_title }}
-                                            </a>
-                                            
-                                            <div class="note-path">{{ page.path }}</div>
-                                            
-                                            <div class="note-meta">
-                                                {% if page.path contains "marimo" or page.content contains "marimo" %}
-                                                    <span class="note-type marimo">Marimo Notebook</span>
-                                                {% elsif page.path contains "reveal" or page.content contains "reveal.js" %}
-                                                    <span class="note-type presentation">Presentation</span>
-                                                {% else %}
-                                                    <span class="note-type">HTML Note</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    {% endunless %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
+            <div id="notesContainer" style="display: none;">
+                <!-- Notes will be populated by JavaScript -->
             </div>
             
             <div class="no-results" id="noResults" style="display: none;">
                 No notes found matching your search.
             </div>
             
-            <div class="stats">
-                {% assign total_notes = html_pages | where_exp: "page", "page.path != 'index.html'" | size %}
-                Total Notes: {{ total_notes }}
+            <div class="stats" id="statsContainer" style="display: none;">
+                Total Notes: <span id="totalNotesCount">0</span>
             </div>
         </div>
     </div>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        // Known HTML files in the repository
+        const knownNotes = [
+          {
+                    "title": "LOESS Updates",
+                    "path": "Notes/Apply_LOESS_To_Previous_ESM.html",
+                    "folder": "Notes",
+                    "type": "marimo"
+          },
+          {
+                    "title": "LOESS ESM",
+                    "path": "Notes/LOESS_ESM.html",
+                    "folder": "Notes",
+                    "type": "marimo"
+          },
+          {
+                    "title": "Maximum Frequency",
+                    "path": "Notes/Maximum Frequency.html",
+                    "folder": "Notes",
+                    "type": "html"
+          },
+          {
+                    "title": "Metagenomic Analysis",
+                    "path": "Notes/Metagenomic Analysis.html",
+                    "folder": "Notes",
+                    "type": "html"
+          }
+];
+
+        function createNoteCard(note) {
+            const typeClass = note.type === 'marimo' ? 'marimo' : 
+                             note.type === 'presentation' ? 'presentation' : '';
+            const typeName = note.type === 'marimo' ? 'Marimo Notebook' :
+                            note.type === 'presentation' ? 'Presentation' : 'HTML Note';
+            
+            return `
+                <div class="note-card" data-title="${note.title.toLowerCase()}" data-path="${note.path.toLowerCase()}">
+                    <a href="${note.path}" class="note-title">${note.title}</a>
+                    <div class="note-path">${note.path}</div>
+                    <div class="note-meta">
+                        <span class="note-type ${typeClass}">${typeName}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function groupNotesByFolder(notes) {
+            const grouped = {};
+            notes.forEach(note => {
+                const folder = note.folder || 'Root';
+                if (!grouped[folder]) {
+                    grouped[folder] = [];
+                }
+                grouped[folder].push(note);
+            });
+            return grouped;
+        }
+
+        function renderNotes() {
+            const notesContainer = document.getElementById('notesContainer');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const statsContainer = document.getElementById('statsContainer');
+            const totalNotesCount = document.getElementById('totalNotesCount');
+            
+            const groupedNotes = groupNotesByFolder(knownNotes);
+            let html = '';
+            
+            Object.keys(groupedNotes).forEach(folder => {
+                const folderDisplayName = folder === 'Root' ? 'Root Directory' : 
+                                        folder.replace(/\//g, ' / ');
+                
+                html += `
+                    <div class="folder-section" data-folder="${folder}">
+                        <h2 class="folder-title">
+                            <span class="folder-icon">📁</span>
+                            ${folderDisplayName}
+                        </h2>
+                        <div class="notes-grid">
+                            ${groupedNotes[folder].map(createNoteCard).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            notesContainer.innerHTML = html;
+            totalNotesCount.textContent = knownNotes.length;
+            
+            // Show content and hide loading
+            loadingMessage.style.display = 'none';
+            notesContainer.style.display = 'block';
+            statsContainer.style.display = 'block';
+        }
+
+        function setupSearch() {
             const searchInput = document.getElementById('searchInput');
             const notesContainer = document.getElementById('notesContainer');
             const noResults = document.getElementById('noResults');
@@ -292,6 +336,11 @@ description: Research notes and documentation hub
                 noResults.style.display = hasVisibleResults ? 'none' : 'block';
                 notesContainer.style.display = hasVisibleResults ? 'block' : 'none';
             });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderNotes();
+            setupSearch();
         });
     </script>
 </body>
