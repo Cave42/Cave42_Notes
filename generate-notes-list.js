@@ -12,7 +12,7 @@ function findHtmlFiles(dir, baseDir = '') {
         const fullPath = path.join(dir, item);
         const stat = fs.statSync(fullPath);
         
-        if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
+        if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules' && item !== 'reveal.js') {
             // Recursively scan subdirectories
             files.push(...findHtmlFiles(fullPath, path.join(baseDir, item)));
         } else if (item.endsWith('.html')) {
