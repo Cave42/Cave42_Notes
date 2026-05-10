@@ -22,7 +22,7 @@ function findHtmlFiles(dir, baseDir = '') {
             }
             
             // Skip certain utility files
-            if (item.includes('speaker-view') || fullPath.includes('plugin')) {
+            if (item.includes('speaker-view') || fullPath.includes('plugin') || item === '404.html') {
                 continue;
             }
             
@@ -49,9 +49,11 @@ function extractTitle(filePath) {
         // Try to extract title from HTML <title> tag
         const titleMatch = content.match(/<title[^>]*>([^<]+)<\/title>/i);
         if (titleMatch && titleMatch[1].trim() && !titleMatch[1].includes('{{')) {
-            const title = titleMatch[1].trim();
+            let title = titleMatch[1].trim();
+            // Strip common framework suffixes
+            title = title.replace(/\s*-\s*Slidev$/, '').replace(/\s*-\s*reveal\.js$/, '').trim();
             // Skip generic titles
-            if (title && title !== 'a marimo app' && !title.includes('reveal.js')) {
+            if (title && title !== 'a marimo app') {
                 return title;
             }
         }
@@ -108,6 +110,9 @@ function detectFileType(filePath) {
             return 'marimo';
         }
         if (content.includes('reveal.js') || content.includes('Reveal.initialize')) {
+            return 'presentation';
+        }
+        if (content.includes('slidev') || content.includes('@slidev')) {
             return 'presentation';
         }
     } catch (e) {
