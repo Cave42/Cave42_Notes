@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'Notes/**/*.html'
+      - 'Slides/**/*.html'
   workflow_dispatch:
 
 permissions:
