@@ -122,19 +122,12 @@ function detectFileType(filePath) {
 }
 
 function generateNotesArray() {
-    const results = [];
-
     const notesDir = path.join(__dirname, 'Notes');
-    if (fs.existsSync(notesDir)) {
-        results.push(...findHtmlFiles(notesDir, 'Notes'));
+    if (!fs.existsSync(notesDir)) {
+        return [];
     }
-
-    const slidesDir = path.join(__dirname, 'Slides');
-    if (fs.existsSync(slidesDir)) {
-        results.push(...findHtmlFiles(slidesDir, 'Slides'));
-    }
-
-    return results;
+    
+    return findHtmlFiles(notesDir, 'Notes');
 }
 
 function updateIndexHtml() {
