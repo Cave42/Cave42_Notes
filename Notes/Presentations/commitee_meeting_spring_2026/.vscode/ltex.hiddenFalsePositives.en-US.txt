@@ -1,0 +1,4 @@
+{"rule":"MORFOLOGIK_RULE_EN_US","sentence":"^\\QAim 1:\nUsing Viral DASMs to predict viral fitness\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_US","sentence":"^\\QAfter graduating\nWorked in the Greninger lab\nMCB University of Washington Studying computational epidemiology\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_US","sentence":"^\\QAfter graduating\nWorked in the Greninger lab studying rhinovirus and treponema pallidum\nMCB University of Washington Studying computational epidemiology\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qlayout: center\\E$"}
